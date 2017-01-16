@@ -16,6 +16,7 @@ some highlights:
 To use:
 * `git clone` somewhere your config can read it, like `~/.config/awesome`
 * Use it in your configuration:
+
     ```lua
     -- in your rc.lua:
     local popup_widget = require("nifty.popup_widget")
