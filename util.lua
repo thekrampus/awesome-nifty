@@ -12,7 +12,7 @@ local function write_log(msg)
    print(msg)
 end
 
--- Log a system message.
+--- Log a system message.
 -- The message string in `msg` is formatted and timestamped.
 -- The resulting log message is passed to `log_fn`, or printed to stdout by default
 function util.log(msg, log_fn)
@@ -26,13 +26,13 @@ function util.log(msg, log_fn)
    log_fn(log_msg)
 end
 
--- Run a command and notify with output. Useful for debugging.
+--- Run a command and notify with output. Useful for debugging.
 function util.run_and_notify(cmd)
    local outstr = util.pread(cmd .. " 2>&1")
    naughty.notify({title = cmd, text = outstr})
 end
 
--- Recursively concat a table into a single formatted string.
+--- Recursively concat a table into a single formatted string.
 function util.tcat(t, depth, max_depth)
    if type(t) ~= "table" then
       return tostring(t)
@@ -59,7 +59,7 @@ function util.tcat(t, depth, max_depth)
    return ret
 end
 
--- Sanitize a string for Pango markup
+--- Sanitize a string for Pango markup
 function util.sanitize(raw_string)
    return raw_string
       :gsub("&", "&amp;")
@@ -69,5 +69,14 @@ function util.sanitize(raw_string)
       :gsub("\"", "&quot;")
 end
 
+--- Format a formatting string using the given table as a reference.
+-- Any instance of "${big_key.key}" will be replaced with the sanitized value
+-- of tab.key if it exists, or the empty string otherwise.
+function util.format(fmt, tab, big_key)
+   for match, key in fmt:gmatch("(%${" .. big_key .. "%.(.-)})") do
+      fmt = fmt:gsub(match, tab[key] and util.sanitize(tab[key]) or "")
+   end
+   return fmt
+end
 
 return util
