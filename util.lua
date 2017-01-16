@@ -32,4 +32,31 @@ function util.run_and_notify(cmd)
    naughty.notify({title = cmd, text = outstr})
 end
 
+-- Recursively concat a table into a single formatted string.
+function util.tcat(t, depth, max_depth)
+   if type(t) ~= "table" then
+      return tostring(t)
+   end
+
+   depth = depth or 0
+   max_depth = max_depth or 4
+
+   local indent = string.rep("  ", depth)
+
+   if depth > max_depth then
+      return indent .. "[...]\n"
+   end
+
+   local ret = ""
+   for k,v in pairs(t) do
+      ret = ret .. indent .. tostring(k) .. ": "
+      if type(v) == "table" then
+         ret = ret .. "{\n" .. util.tcat(v, depth+1) .. indent .. "}\n"
+      else
+         ret = ret .. tostring(v) .. "\n"
+      end
+   end
+   return ret
+end
+
 return util
