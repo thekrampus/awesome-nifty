@@ -59,4 +59,15 @@ function util.tcat(t, depth, max_depth)
    return ret
 end
 
+-- Sanitize a string for Pango markup
+function util.sanitize(raw_string)
+   return raw_string
+      :gsub("&", "&amp;")
+      :gsub("<", "&lt;")
+      :gsub(">", "&gt;")
+      :gsub("'", "&apos;")
+      :gsub("\"", "&quot;")
+end
+
+
 return util
