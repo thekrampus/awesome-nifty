@@ -85,4 +85,34 @@ function util.format(fmt, tab, big_key)
    return fmt
 end
 
+-- Yields a function to spawn the given program
+function util.spawner(app)
+   return function()
+      awful.spawn(app)
+   end
+end
+
+--- Yields a function that toggles a given program.
+-- First, this checks if an instance of the program is running.
+-- If so, it kills all instances. Otherwise, it spawns a new instance.
+-- Beware that the first whitespace-delimited token in the app string is
+-- assumed to be the program name, so complex commands may not work the way
+-- you think they do.
+function util.toggler(app)
+   local appname = app:match("(.-)%s")
+   if not appname then return end
+
+   local function cb(_, _, _, code)
+      if code == 0 then
+         awful.spawn("killall " .. appname)
+      else
+         awful.spawn(app)
+      end
+   end
+
+   return function()
+      awful.spawn.easy_async("pgrep " .. appname, cb)
+   end
+end
+
 return util
