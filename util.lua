@@ -99,7 +99,7 @@ end
 -- assumed to be the program name, so complex commands may not work the way
 -- you think they do.
 function util.toggler(app)
-   local appname = app:match("(.-)%s")
+   local appname = app:match("[^%s]+")
    if not appname then return end
 
    local function cb(_, _, _, code)
