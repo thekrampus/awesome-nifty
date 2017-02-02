@@ -1,4 +1,5 @@
 --- Nifty utilities
+local awful = require("awful")
 local naughty = require("naughty")
 
 local util = {}
@@ -28,8 +29,13 @@ end
 
 --- Run a command and notify with output. Useful for debugging.
 function util.run_and_notify(cmd)
-   local outstr = util.pread(cmd .. " 2>&1")
-   naughty.notify({title = cmd, text = outstr})
+   local function callback(out, err, _, code)
+      local title = (code == 0) and cmd or cmd .. " (" .. tostring(code) .. ")"
+      local text = (#err == 0) and out or "stdout:\n" .. out .. "\nstderr:\n" .. err
+      naughty.notify{title=title, text=text}
+   end
+
+   awful.spawn.easy_async(cmd, callback)
 end
 
 --- Recursively concat a table into a single formatted string.
