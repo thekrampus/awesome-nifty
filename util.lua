@@ -115,4 +115,38 @@ function util.toggler(app)
    end
 end
 
+--- Yields a function that spawns a "watcher" terminal window.
+-- This watcher window is a floating, sticky, on-top terminal window calling
+-- `watch` with the given command. Useful for lots of things.
+-- Takes a table of optional arguments:
+-- @param cmd  The shell command to watch
+-- @param opts A table of optional arguments
+-- @param opts.terminal The terminal to open, defaults to the global value
+-- @param opts.rules    Rules for spawning the client
+-- @param opts.geometry Geometry to apply to the client on spawn
+-- @param opts.interval Refresh interval for `watch`
+function util.watcher(cmd, opts)
+   local opts = opts or {}
+
+   local terminal = opts.terminal or terminal or "xterm"
+
+   local rules = opts.rules or {}
+   rules.sticky = true
+   rules.floating = true
+   rules.ontop = true
+
+   local callback = nil
+   if opts.geometry then
+      callback = function(c) c:geometry(opts.geometry) end
+   end
+
+   local interval = opts.interval or 0.5
+
+   local watch_cmd = terminal .. " -e ewatch -n" .. interval .. " " .. cmd
+
+   return function()
+      awful.spawn(watch_cmd, rules, callback)
+   end
+end
+
 return util
