@@ -9,5 +9,6 @@ local nifty = {}
 nifty.util = require("nifty.util")
 nifty.timeout = require("nifty.timeout")
 nifty.popup_widget = require("nifty.popup_widget")
+nifty.smart_borders = require("nifty.smart_borders")
 
 return nifty
