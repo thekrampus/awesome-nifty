@@ -24,13 +24,6 @@ local set_borders = function(c, firstRender)
    local b_gutter = beautiful.border_gutter or def_gutter
    local b_arrow = beautiful.border_arrow or def_arrow
 
-   if c.floating then
-      b_weight = 0
-      b_string_weight = 0
-      b_gutter = 0
-      b_arrow = 0
-   end
-
    local side = b_weight + b_gutter
    local total_width = c.width
    local total_height = c.height
