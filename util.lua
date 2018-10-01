@@ -9,6 +9,8 @@ local log_stat_fmt = "%8.3fs %8.1fkb"
 local log_fmt = "%s %s: %s%s<%s>"
 local log_width = 100
 
+local toggle_fmt = "bash -c 'kill $(pgrep %s) || %s'"
+
 local function write_log(msg)
    print(msg)
 end
@@ -55,7 +57,7 @@ function util.tcat(t, depth, max_depth)
 
    local ret = ""
    for k,v in pairs(t) do
-      ret = ret .. indent .. tostring(k) .. ": "
+      ret = ret .. indent .. tostring(k) .. "::" .. type(v) .. " = "
       if type(v) == "table" then
          ret = ret .. "{\n" .. util.tcat(v, depth+1) .. indent .. "}\n"
       else
@@ -87,8 +89,8 @@ end
 
 -- Yields a function to spawn the given program
 function util.spawner(app)
-   return function()
-      awful.spawn(app)
+   return function(sn_rules, callback)
+      awful.spawn(app, sn_rules or true, callback)
    end
 end
 
@@ -102,16 +104,18 @@ function util.toggler(app)
    local appname = app:match("[^%s]+")
    if not appname then return end
 
-   local function cb(_, _, _, code)
-      if code == 0 then
-         awful.spawn("killall " .. appname)
+   local cb = function(sn_rules, callback, out, _, _, code)
+      if code ~= 0 then
+         awful.spawn(app, sn_rules or true, callback)
       else
-         awful.spawn(app)
+         awful.spawn('kill ' .. out)
       end
    end
 
-   return function()
-      awful.spawn.easy_async("pgrep " .. appname, cb)
+   return function(sn_rules, callback)
+      awful.spawn.easy_async('pgrep ' .. appname,
+                             function(...) cb(sn_rules, callback, ...) end
+      )
    end
 end
 
