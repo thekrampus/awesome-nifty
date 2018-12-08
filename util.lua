@@ -89,8 +89,9 @@ end
 
 -- Yields a function to spawn the given program
 function util.spawner(app)
-   return function(sn_rules, callback)
-      awful.spawn(app, sn_rules or true, callback)
+   return function(opts)
+      local opts = opts or {}
+      awful.spawn(app, opts.sn_rules or true, opts.callback)
    end
 end
 
