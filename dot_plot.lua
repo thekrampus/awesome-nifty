@@ -43,18 +43,6 @@ local function encode(decimal)
    return table.concat(charbytes)
 end
 
-local function range(from, to, step)
-   step = step or 1
-   return function(_, lastvalue)
-      local nextvalue = lastvalue + step
-      if step > 0 and nextvalue <= to or step < 0 and nextvalue >= to or
-         step == 0
-      then
-         return nextvalue
-      end
-   end, nil, from - step
-end
-
 local function interpolate(a, b, res)
    local mid = {
       x = (a.x + b.x) / 2,
@@ -77,9 +65,9 @@ end
 
 local function new_canvas(args)
    local canvas = {}
-   for row in range(0, args.height) do
+   for row=0, args.height do
       canvas[row] = {}
-      for col in range(0, args.height) do
+      for col=0, args.height do
          canvas[row][col] = null_utf8
       end
    end
@@ -110,7 +98,7 @@ local function new_canvas(args)
       local pad_fmt = string.format("%%%dd", pad)
 
       local ret = ""
-      for row in range(args.height - 1, 0, -1) do
+      for row=(args.height - 1), 0, -1 do
          if args.y.ticks > 0 then
             if row%args.y.ticks == 0 then
                ret = ret .. pad_fmt:format(math.floor(row*y_scale))
@@ -118,7 +106,7 @@ local function new_canvas(args)
                ret = ret .. string.rep(' ', pad)
             end
          end
-         for col in range(0, args.width) do
+         for col=0, args.width do
             ret = ret .. encode(self[row][col] or null_utf8)
          end
          ret = ret .. "\n"
