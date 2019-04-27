@@ -65,21 +65,18 @@ end
 
 local function new_canvas(args)
    local canvas = {}
-   for row=0, args.height do
-      canvas[row] = {}
-      for col=0, args.height do
-         canvas[row][col] = null_utf8
-      end
-   end
 
-   local y_scale = (args.y.max - args.y.min) / args.height
+   local scale = {
+      y = (args.y.max - args.y.min) / args.height,
+      x = (args.x.max - args.x.min) / args.width
+   }
 
    canvas.set = function(self, x, y)
       if args.verbose >= 2 then
          print(string.format("Setting (%.1f, %.1f)...", x, y))
       end
-      x = math.floor(x)
-      y = math.floor(y/y_scale*4)
+      x = math.floor(x/scale.x*2)
+      y = math.floor(y/scale.y*4)
       local col = math.floor(x/2)
       local x_i = 1 + (x % 2)
       local row = math.floor(y/4)
@@ -99,18 +96,35 @@ local function new_canvas(args)
 
       local ret = ""
       for row=(args.height - 1), 0, -1 do
+         -- render padding & y-axis ticks
          if args.y.ticks > 0 then
             if row%args.y.ticks == 0 then
-               ret = ret .. pad_fmt:format(math.floor(row*y_scale))
+               ret = ret .. pad_fmt:format(math.floor(row*scale.y))
             else
                ret = ret .. string.rep(' ', pad)
             end
          end
-         for col=0, args.width do
+
+         -- render plot
+         for col=0, (args.width - 1) do
             ret = ret .. encode(self[row][col] or null_utf8)
          end
-         ret = ret .. "\n"
+
+         -- new line, unless this is the last line
+         if row > 0 then
+            ret = ret .. "\n"
+         end
       end
+
+      -- render x-axis ticks
+      if args.x.ticks > 0 then
+         ret = ret .. "\n" .. string.format('%%%dd', pad+1):format(0)
+         local xpad_fmt = string.format("%%%dd", args.x.ticks)
+         for col=args.x.ticks, (args.width - 1), args.x.ticks do
+            ret = ret .. xpad_fmt:format(math.floor(col * scale.x))
+         end
+      end
+
       return ret
    end
 
@@ -189,7 +203,6 @@ dot_plot.plot = function(data, args)
    -- merge arguments
    args = infer_args(data, args or {})
 
-
    -- draw to canvas
    local canvas = new_canvas(args)
    local prev = false
@@ -201,6 +214,11 @@ dot_plot.plot = function(data, args)
       end
       canvas:set(x, y)
       prev = {x=x, y=y}
+   end
+
+   if args.verbose >= 3 then
+      local pretty = require('pl.pretty')
+      print("canvas = " .. pretty.write(canvas))
    end
 
    return canvas:render()
