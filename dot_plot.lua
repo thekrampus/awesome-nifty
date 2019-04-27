@@ -10,7 +10,8 @@ local def_args = {
       min = 0,    -- minimum of y-axis
       ticks = 3   -- ticks every 3 rows (0 to disable)
    },
-   smoothing = 1  -- level of data interpolation
+   smoothing = 1, -- level of data interpolation
+   verbose = 0    -- level of plotting data to output (0 or 1)
 }
 
 local null_glyph = "⠀"
@@ -86,7 +87,9 @@ local function new_canvas(args)
    local y_scale = (args.y.max - args.y.min) / args.height
 
    canvas.set = function(self, x, y)
-      print(string.format("Setting (%.1f, %.1f)...", x, y))
+      if args.verbose >= 2 then
+         print(string.format("Setting (%.1f, %.1f)...", x, y))
+      end
       x = math.floor(x)
       y = math.floor(y/y_scale*4)
       local col = math.floor(x/2)
@@ -97,7 +100,9 @@ local function new_canvas(args)
          self[row] = {}
       end
       self[row][col] = (self[row][col] or null_utf8) | pixel_map[y_i][x_i]
-      print(string.format("Set (%d, %d) => %d, %d [%d, %d]", x, y, col, row, x_i, y_i))
+      if args.verbose >= 2 then
+         print(string.format("Set (%d, %d) => %d, %d [%d, %d]", x, y, col, row, x_i, y_i))
+      end
    end
 
    canvas.render = function(self)
@@ -124,14 +129,78 @@ local function new_canvas(args)
    return canvas
 end
 
+local function getkeys(tbl)
+   local keys = {}
+   local n = 0
+
+   for k,_ in pairs(tbl) do
+      n = n+1
+      keys[n] = k
+   end
+
+   return keys
+end
+
+
+local function infer_args(data, args)
+   local xdata = getkeys(data)
+
+   -- width defaults to data length / 2
+   args.width = args.width or math.ceil(#xdata / 2)
+
+   -- height defaults to 1 character
+   args.height = args.height or 1
+
+   -- smoothing defaults to 1 level
+   args.smoothing = args.smoothing or 1
+
+   -- verbosity defaults to 0 (none)
+   args.verbose = args.verbose or 0
+
+   -- if y-axis settings aren't given, populate them
+   args.y = args.y or {}
+
+   -- y-axis ticks default to every 3 rows
+   args.y.ticks = args.y.ticks or 3
+
+   -- y-axis max/min default to inferred based on data
+   args.y.max = math.ceil(args.y.max or math.max(unpack(data)))
+   args.y.min = math.floor(args.y.min or math.min(unpack(data)))
+
+   -- if x-axis settings aren't given, populate them
+   args.x = args.x or {}
+
+   -- x-axis ticks default to 0 (off)
+   args.x.ticks = args.x.ticks or 0
+
+   -- y-axis max/min default to inferred based on data
+   args.x.max = math.ceil(args.x.max or math.max(unpack(xdata)))
+   args.x.min = math.floor(args.x.min or math.min(unpack(xdata)))
+
+   -- if verbose, print arguments
+   if args.verbose >= 1 then
+      local pretty = require('pl.pretty')
+      print("args = " .. pretty.write(args))
+   end
+   return args
+end
+
+-- Plot the given data using dots
+--
+-- @param data  The data to plot
+-- @param args  Arguments for plotting, as follows:
+--     - width: width of the plot, in characters. Default: half of number of data points, rounded up
+--     - height: height of the plot, in characters. Default: 1
+--     - smoothing: level of smoothing to apply. Default: 1
+--     - verbose: level of debug output. Default: 0 (off)
+--     - x, y: table of axis arguments, as follows:
+--         - max: upper bound of axis. Default: upper bound of data
+--         - min: lower bound of axis. Default: lower bound of data
+--         - ticks: Axis tick period. Default: 3 rows for y, 0 (off) for x
 dot_plot.plot = function(data, args)
    -- merge arguments
-   args = args or {}
-   for k,v in pairs(def_args) do
-      if not args[k] then
-         args[k] = v
-      end
-   end
+   args = infer_args(data, args or {})
+
 
    -- draw to canvas
    local canvas = new_canvas(args)
