@@ -66,27 +66,40 @@ end
 local function new_canvas(args)
    local canvas = {}
 
+   --- transformation from cartesian space to screen-space to dot-space
+   -- (x,y): cartesian point
+   -- <x,y>: screen point
+   -- col,row [x_i,y_i]: dot point
+   -- <x> <- floor( ( (x - x_min) * 2 * c_width ) / (x_max - x_min) )
+   -- <y> <- floor( ( (y - y_min) * 4 * c_height ) / (y_max - y_min) )
+   -- col <- floor( <x> / 2 )
+   -- row <- floor( <y> / 4 )
+   -- x_i <- 1 + ( <x> % 2 )
+   -- y_i <- 4 - ( <y> % 4 )
+
    local scale = {
-      y = (args.y.max - args.y.min) / args.height,
-      x = (args.x.max - args.x.min) / args.width
+      x = (2 * args.width) / (args.x.max - args.x.min),
+      y = (4 * args.height) / (args.y.max - args.y.min)
    }
 
    canvas.set = function(self, x, y)
       if args.verbose >= 2 then
          print(string.format("Setting (%.1f, %.1f)...", x, y))
       end
-      x = math.floor(x/scale.x*2)
-      y = math.floor(y/scale.y*4)
-      local col = math.floor(x/2)
-      local x_i = 1 + (x % 2)
-      local row = math.floor(y/4)
-      local y_i = 4 - (y % 4)
+      local px = {
+         x = math.floor((x - args.x.min) * scale.x),
+         y = math.floor((y - args.y.min) * scale.y)
+      }
+      local col = math.floor(px.x / 2)
+      local row = math.floor(px.y / 4)
+      local x_i = 1 + (px.x % 2)
+      local y_i = 4 - (px.y % 4)
       if not self[row] then
          self[row] = {}
       end
       self[row][col] = (self[row][col] or null_utf8) | pixel_map[y_i][x_i]
       if args.verbose >= 2 then
-         print(string.format("Set (%d, %d) => %d, %d [%d, %d]", x, y, col, row, x_i, y_i))
+         print(string.format("Set (%d, %d) => %d, %d [%d, %d]", px.x, px.y, col, row, x_i, y_i))
       end
    end
 
@@ -99,7 +112,7 @@ local function new_canvas(args)
          -- render padding & y-axis ticks
          if args.y.ticks > 0 then
             if row%args.y.ticks == 0 then
-               ret = ret .. pad_fmt:format(math.floor(row*scale.y))
+               ret = ret .. pad_fmt:format(math.floor((row*4)/scale.y + args.y.min))
             else
                ret = ret .. string.rep(' ', pad)
             end
@@ -121,7 +134,7 @@ local function new_canvas(args)
          ret = ret .. "\n" .. string.format('%%%dd', pad+1):format(0)
          local xpad_fmt = string.format("%%%dd", args.x.ticks)
          for col=args.x.ticks, (args.width - 1), args.x.ticks do
-            ret = ret .. xpad_fmt:format(math.floor(col * scale.x))
+            ret = ret .. xpad_fmt:format(math.floor((col*2) / scale.x + args.x.min))
          end
       end
 
@@ -153,7 +166,7 @@ local function infer_args(data, args)
    -- height defaults to 1 character
    args.height = args.height or 1
 
-   -- smoothing defaults to 1 level
+   -- smoothing defaults to 1 iteration
    args.smoothing = args.smoothing or 1
 
    -- verbosity defaults to 0 (none)
@@ -166,8 +179,8 @@ local function infer_args(data, args)
    args.y.ticks = args.y.ticks or 3
 
    -- y-axis max/min default to inferred based on data
-   args.y.max = math.ceil(args.y.max or math.max(unpack(data)))
-   args.y.min = math.floor(args.y.min or math.min(unpack(data)))
+   args.y.max = args.y.max or math.ceil(math.max(unpack(data)) + 0.01)
+   args.y.min = args.y.min or math.floor(math.min(unpack(data)))
 
    -- if x-axis settings aren't given, populate them
    args.x = args.x or {}
@@ -176,8 +189,8 @@ local function infer_args(data, args)
    args.x.ticks = args.x.ticks or 0
 
    -- y-axis max/min default to inferred based on data
-   args.x.max = math.ceil(args.x.max or math.max(unpack(xdata)))
-   args.x.min = math.floor(args.x.min or math.min(unpack(xdata)))
+   args.x.max = args.x.max or math.ceil(math.max(unpack(xdata)))
+   args.x.min = args.x.min or math.floor(math.min(unpack(xdata)))
 
    -- if verbose, print arguments
    if args.verbose >= 1 then
