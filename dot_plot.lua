@@ -2,19 +2,6 @@
 
 local dot_plot = {}
 
-local def_args = {
-   width = 40,    -- width in characters
-   height = 15,   -- height in characters
-   y = {
-      max = 100,  -- maximum of y-axis
-      min = 0,    -- minimum of y-axis
-      ticks = 3   -- ticks every 3 rows (0 to disable)
-   },
-   smoothing = 1, -- level of data interpolation
-   verbose = 0    -- level of plotting data to output (0 or 1)
-}
-
-local null_glyph = "⠀"
 local null_utf8 = 0x2800
 
 local pixel_map = {
