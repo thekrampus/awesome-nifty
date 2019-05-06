@@ -11,5 +11,6 @@ nifty.timeout = require("nifty.timeout")
 nifty.popup_widget = require("nifty.popup_widget")
 nifty.smart_borders = require("nifty.smart_borders")
 nifty.dots = require("nifty.dot_plot")
+nifty.sync = require("nifty.sync")
 
 return nifty
