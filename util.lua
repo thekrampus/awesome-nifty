@@ -154,4 +154,46 @@ function util.watcher(cmd, opts)
    end
 end
 
+--- Deep copy of a table
+function util.copy_table(t)
+   local copy = {}
+   for k, v in pairs(t) do
+      if type(v) == "table" then
+         copy[k] = util.copy_table(v)
+      else
+         copy[k] = v
+      end
+   end
+   return copy
+end
+
+--- Merge values from `b` into `a`.
+-- All values in `a` will be preserved. If a value exists in `b` and
+-- not in `a`, it will be copied to `a`.
+function util.merge_tables(a, b)
+   local merged = util.copy_table(a)
+   for k, v in pairs(b) do
+      if a[k] == nil then
+         merged[k] = v
+      elseif type(a[k]) == "table" and type(v) == "table" then
+         merged[k] = util.merge_tables(a[k], v)
+      end
+   end
+
+   return merged
+end
+
+--- A version of `merge_tables` that merges in-place rather than
+-- creating a copy.
+function util.merge_in_place(a, b)
+   for k, v in pairs(b) do
+      if a[k] == nil then
+         a[k] = v
+      elseif type(a[k]) == "table" and type(v) == "table" then
+         a[k] = util.merge_in_place(a[k], v)
+      end
+   end
+   return a
+end
+
 return util
