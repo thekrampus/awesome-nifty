@@ -12,5 +12,6 @@ nifty.popup_widget = require("nifty.popup_widget")
 nifty.smart_borders = require("nifty.smart_borders")
 nifty.dots = require("nifty.dot_plot")
 nifty.sync = require("nifty.sync")
+nifty.queue = require("nifty.queue")
 
 return nifty
