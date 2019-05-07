@@ -11,7 +11,7 @@ function queue:new(capacity)
       {
          _data = {},
          _capacity = capacity,
-         _head = 1
+         _head = 0
       }, {
          __index = function(t, k)
             if type(k) == "number" then
