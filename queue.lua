@@ -77,4 +77,8 @@ function queue:as_array()
    return arr
 end
 
+function queue:to_string()
+   return string.format('{ %s }', table.concat(self:as_array(), ', '))
+end
+
 return queue
